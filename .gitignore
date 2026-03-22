@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+FLOW.md
+FileDescription.md
+DATA.md

@@ -176,15 +176,10 @@ export const handle = ({
                 }
             }
             if (piece.type === "king") {
-                // castling
-                // Color
                 if (sideToMove === "white") {
-                    // Whether White King is at (7, 4)
                     const cell = newBoard[7][4];
                     if (!cell.isEmpty) {
                         if (cell.piece.color === "white" && cell.piece.type === "king" && cell.piece.atInitialPosition) {
-                            // King Side Castling
-                            // Is King Side Castling Possible
                             if (isKingSideCastlePossible(board, sideToMove)) {
                                 newBoard[7][6].isHighlighted = true;
                             }
@@ -196,13 +191,10 @@ export const handle = ({
                 } else {
                     const cell = newBoard[0][4];
                     if (cell.piece.color === "black" && cell.piece.type === "king" && cell.piece.atInitialPosition) {
-                        // King Side Castling
-                        // Is King Side Castling Possible
                         if (isKingSideCastlePossible(board, sideToMove)) {
                             newBoard[0][6].isHighlighted = true;
                         }
                         if (isQueenSideCastlePossible(board, sideToMove)) {
-                            console.log("Queen Side Castle for Black");
                             newBoard[0][2].isHighlighted = true;
                         }
                     }
@@ -277,7 +269,7 @@ const isQueenSideCastlePossible = (board, sideToMove) => {
                 if (board[0][1].isEmpty) {
                     if (!board[0][0].isEmpty) {
                         const piece = board[0][0].piece;
-                        if (piece.type === "rook" && piece.color === "white" && piece.atInitialPosition) {
+                        if (piece.type === "rook" && piece.color === "black" && piece.atInitialPosition) {
                             const newBoard = createBoardAndAddFlags(board, sideToMove);
                             if (!newBoard[0][4].isUnderAttack && !newBoard[0][3].isUnderAttack && !newBoard[0][2].isUnderAttack && !newBoard[0][1].isUnderAttack && !newBoard[0][0].isUnderAttack) {
                                 return true;
