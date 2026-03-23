@@ -10,7 +10,7 @@ import {
     isInsideBoard
 } from "./methods.js";
 import {addAttackFlagsForCheck, isKingUnderCheck} from "./kingUnderCheck.js";
-import {getFile} from "./data.js";
+import {getFile, Piece} from "./data.js";
 
 export const handle = ({
     board,
@@ -21,7 +21,7 @@ export const handle = ({
     activePiece,
     updateActivePiece,
     updateBoard,
-    updateRemovedPieces, completeMatch, updateSteps, updatePrevBoards, prevSteps,
+    updateRemovedPieces, completeMatch, updateSteps, updatePrevBoards, prevSteps, setPawnPromotionSquare
 }) => {
     const cell = board[rIndex][cIndex];
     if (cell.isHighlighted) {
@@ -82,15 +82,39 @@ export const handle = ({
                     king.atInitialPosition = false;
                     rook.atInitialPosition = false;
                     let stepNotation = "O-O-O";
-                    checkGameStatus(newBoard, sideToMove, updateActivePiece, updateBoard, updateSideToMove, completeMatch, stepNotation, updateSteps, updatePrevBoards);
+                    checkGameStatus(newBoard, sideToMove, updateActivePiece, updateBoard, updateSideToMove, completeMatch, stepNotation, updateSteps, updatePrevBoards, prevSteps);
                     return;
                 }
             }
         }
+
+        if (activePieceDetails.type === "pawn") {
+            // console.log("Pawn Promotion");
+            if ((rIndex === 0 && sideToMove === "white") || (rIndex === 7 && sideToMove === "black")) {
+                // pawn promotion
+                // prompt
+                // console.log("Pawn Promotion");
+                setPawnPromotionSquare({
+                    r: rIndex,
+                    c: cIndex,
+                    color: sideToMove,
+                    capture: false
+                })
+                // putPieceAtPosition(newBoard, rIndex, cIndex, newPiece);
+                removePieceFromPosition(newBoard, activePiece.r, activePiece.c);
+                updateActivePiece(null);
+                updateBoard(newBoard);
+                // let stepNotation = cell.file + cell.rank + "=" + newPiece.type[0];
+                // checkGameStatus(newBoard, sideToMove, updateActivePiece, updateBoard, updateSideToMove, completeMatch, stepNotation, updateSteps, updatePrevBoards, prevSteps);
+                return;
+            }
+        }
+
+
         let stepNotation = activePieceDetails.algebraicNotation + cell.file + cell.rank;
         swapCells(newBoard, rIndex, cIndex, activePiece);
         newBoard[rIndex][cIndex].piece.atInitialPosition = false;
-        checkGameStatus(newBoard, sideToMove, updateActivePiece, updateBoard, updateSideToMove, completeMatch, stepNotation, updateSteps, updatePrevBoards);
+        checkGameStatus(newBoard, sideToMove, updateActivePiece, updateBoard, updateSideToMove, completeMatch, stepNotation, updateSteps, updatePrevBoards, prevSteps);
     }
     else if (cell.isUnderAttack) {
         const {r, c} = activePiece; // active or selected piece's row and col number
@@ -113,6 +137,30 @@ export const handle = ({
                     checkGameStatus(newBoard, sideToMove, updateActivePiece, updateBoard, updateSideToMove, completeMatch, stepNotation, updateSteps, updatePrevBoards);
                     return;
                 }
+            }
+        }
+
+        if (activePieceDetails.type === "pawn") {
+            if ((rIndex === 0 && sideToMove === "white") || (rIndex === 7 && sideToMove === "black")) {
+                // pawn promotion
+                // prompt
+                removeFlags(newBoard);
+                setPawnPromotionSquare({
+                    r: rIndex,
+                    c: cIndex,
+                    color: sideToMove,
+                    capture: true,
+                })
+                // putPieceAtPosition(newBoard, rIndex, cIndex, newPiece);
+                removePieceFromPosition(newBoard, activePiece.r, activePiece.c);
+                removePieceFromPosition(newBoard, rIndex, cIndex);
+                // putPieceAtPosition(newBoard, rIndex, cIndex, newPiece);
+                // removePieceFromPosition(newBoard, activePiece.r, activePiece.c);
+                updateActivePiece(null);
+                updateBoard(newBoard);
+                // let stepNotation =  newBoard[r][c].file + "x" + cell.file + cell.rank + "=" + newPiece.type[0];
+                // checkGameStatus(newBoard, sideToMove, updateActivePiece, updateBoard, updateSideToMove, completeMatch, stepNotation, updateSteps, updatePrevBoards, prevSteps);
+                return;
             }
         }
 
@@ -216,14 +264,17 @@ export const handle = ({
                     }
                 } else {
                     const cell = newBoard[0][4];
-                    if (cell.piece.color === "black" && cell.piece.type === "king" && cell.piece.atInitialPosition) {
-                        if (isKingSideCastlePossible(board, sideToMove)) {
-                            newBoard[0][6].isHighlighted = true;
-                        }
-                        if (isQueenSideCastlePossible(board, sideToMove)) {
-                            newBoard[0][2].isHighlighted = true;
+                    if (!cell.isEmpty) {
+                        if (cell.piece.color === "black" && cell.piece.type === "king" && cell.piece.atInitialPosition) {
+                            if (isKingSideCastlePossible(board, sideToMove)) {
+                                newBoard[0][6].isHighlighted = true;
+                            }
+                            if (isQueenSideCastlePossible(board, sideToMove)) {
+                                newBoard[0][2].isHighlighted = true;
+                            }
                         }
                     }
+
                 }
             }
         }
@@ -238,6 +289,7 @@ export const handle = ({
         return null;
     }
 }
+
 
 const EnPassantCheck = (board, rIndex, cIndex, prevSteps, sideToMove, value, rank) => {
     if (cIndex + value >= 0 && cIndex + value < 8 && !board[rIndex][cIndex + value].isEmpty && board[rIndex][cIndex+ value].piece.type === "pawn" && board[rIndex][cIndex+ value].piece.color !== sideToMove) {
@@ -254,7 +306,6 @@ const EnPassantCheck = (board, rIndex, cIndex, prevSteps, sideToMove, value, ran
         }
     }
 }
-
 
 const isKingSideCastlePossible = (board, sideToMove) => {
     if (sideToMove === "white") {
@@ -376,11 +427,11 @@ const willKingBeUnderCheck = (board, rIndex, cIndex, r, c, sideToMove) => {
     return isKingUnderCheck(newBoard, sideToMove);
 }
 
-const checkGameStatus = (board, sideToMove, updateActivePiece, updateBoard, updateSideToMove, completeMatch, stepNotation, updateSteps, updatePrevBoards) => {
+const checkGameStatus = (board, sideToMove, updateActivePiece, updateBoard, updateSideToMove, completeMatch, stepNotation, updateSteps, updatePrevBoards, prevSteps) => {
     const checkingColor = getCheckingColor(sideToMove);
 
     if (isKingUnderCheck(board, checkingColor)) {
-        const checkmate = noLegalMoves(board, checkingColor);
+        const checkmate = noLegalMoves(board, checkingColor, prevSteps);
         if (checkmate) {
             stepNotation += "#"
             completeMatch(getCheckingColor(checkingColor));
@@ -394,7 +445,7 @@ const checkGameStatus = (board, sideToMove, updateActivePiece, updateBoard, upda
             // timers logic etc
         }
         updateSteps(stepNotation);
-    } else if (noLegalMoves(board, checkingColor)) {
+    } else if (noLegalMoves(board, checkingColor, prevSteps)) {
         completeMatch(getCheckingColor("Draw by Stalemate"));
     } else {
         updateActivePiece(null);
@@ -403,4 +454,29 @@ const checkGameStatus = (board, sideToMove, updateActivePiece, updateBoard, upda
         updateSteps(stepNotation);
         updatePrevBoards(board);
     }
+}
+
+export const handlePromotion = ({
+    board,
+    pawnPromotionSquare,
+    type,
+    sideToMove,
+    updateSideToMove,
+    updateBoard,
+    completeMatch,
+    updateSteps,
+    updatePrevBoards,
+    updateActivePiece,
+    prevSteps,
+    setPawnPromotionSquare,
+}) => {
+    const {r, c, color} = pawnPromotionSquare;
+    const newBoard = createNewBoard(board);
+    removeFlags(newBoard);
+    const newPiece = new Piece(type, color);
+    putPieceAtPosition(newBoard, r, c, newPiece);
+    const cell = newBoard[r][c];
+    let stepNotation = cell.file + (pawnPromotionSquare.capture ? "x" : "") + cell.rank + "=" + newPiece.type[0];
+    checkGameStatus(newBoard, sideToMove, updateActivePiece, updateBoard, updateSideToMove, completeMatch, stepNotation, updateSteps, updatePrevBoards, prevSteps);
+    setPawnPromotionSquare(null);
 }

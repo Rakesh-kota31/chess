@@ -1,6 +1,6 @@
 import React, {useState, useEffect} from 'react'
 import { ChevronRight, ChevronLeft } from 'lucide-react';
-import {handle} from "../utils/handleClick.js";
+import {handle, handlePromotion} from "../utils/handleClick.js";
 import BoardCell from "./BoardCell.jsx";
 import RowIndexContainer from "./RowIndexContainer.jsx";
 import ColIndexContainer from "./ColIndexContainer.jsx";
@@ -13,7 +13,10 @@ const Board = (props) => {
     const [prevBoards, setPrevBoards] = useState(() => {return [getBoard()]});
     const [steps, setSteps] = useState([]);
     const [activePiece, setActivePiece] = useState(null);
-    const [index, setIndex] = useState(0)
+    const [index, setIndex] = useState(0);
+    const [pawnPromotionSquare, setPawnPromotionSquare] = useState(null);
+
+    // const pawnPromotionRef = useRef(null);
 
     const handlePrevBoard = (value) => {
         let ind = index + value;
@@ -51,6 +54,23 @@ const Board = (props) => {
         setActivePiece(data);
     }
 
+    const handlePawnPromotionClick = (type) => {
+        handlePromotion({
+            board,
+            pawnPromotionSquare,
+            type,
+            sideToMove,
+            updateSideToMove,
+            updateBoard,
+            completeMatch,
+            updateSteps,
+            updatePrevBoards,
+            updateActivePiece,
+            prevSteps: steps,
+            setPawnPromotionSquare,
+        })
+    }
+
     const handleClick = (rIndex, cIndex) => {
         handle({
             board,
@@ -65,15 +85,10 @@ const Board = (props) => {
             completeMatch,
             updateSteps,
             updatePrevBoards,
-            prevSteps: steps
+            prevSteps: steps,
+            setPawnPromotionSquare,
         })
     }
-
-    useEffect(() => {
-        console.log("Steps: ", steps);
-    }, [steps])
-
-    // console.log(board);
 
     return (
         <div>
@@ -109,6 +124,8 @@ const Board = (props) => {
                                                 col_index={col_index}
                                                 handleClick={handleClick}
                                                 sideToMove={sideToMove}
+                                                pawnPromotionSquare={pawnPromotionSquare}
+                                                handlePawnPromotionClick={handlePawnPromotionClick}
                                             />
                                         ))
                                     }

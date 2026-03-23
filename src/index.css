@@ -87,35 +87,6 @@ body {
   align-items: center;
 }
 
-/*.board-cell {*/
-/*  display: flex;*/
-/*  justify-content: center;*/
-/*  align-items: center;*/
-/*  width: 75px;*/
-/*  height: 75px;*/
-/*  position: relative;*/
-/*}*/
-
-/*!* Center the image *!*/
-/*.board-cell img {*/
-/*  width: 80%;*/
-/*  height: 80%;*/
-/*  object-fit: contain;*/
-/*  z-index: 1;*/
-/*}*/
-
-/*!* Overlay SVG *!*/
-/*.board-cell-inner {*/
-/*  position: absolute;*/
-/*  inset: 0;*/
-
-/*  display: flex;*/
-/*  justify-content: center;*/
-/*  align-items: center;*/
-
-/*  z-index: 2;*/
-/*}*/
-
 .col-indexes-container {
   display: flex;
 }
@@ -172,4 +143,55 @@ body {
 .killed-piece {
   width: 20px;
   height: 20px;
+}
+
+.pawn-promotion-container {
+  width: 75px;
+  height: 75px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px;
+  background-color: white;
+}
+
+.pawn-promotion-image {
+  width: 100%;
+  height: auto;
+}
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5); /* dark overlay */
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  z-index: 1000;
+}
+
+.modal-box {
+  background: white;
+  padding: 20px 30px;
+  border-radius: 10px;
+  min-width: 250px;
+  position: relative;
+  text-align: center;
+}
+
+.close-btn {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  border: none;
+  background: transparent;
+  font-size: 18px;
+  cursor: pointer;
 }

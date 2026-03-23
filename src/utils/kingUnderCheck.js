@@ -52,22 +52,13 @@ export const addAttackFlagsForCheck = (board, rIndex, cIndex, checkingColor) => 
     } else {
         possibleSteps = steps[piece.type];
     }
-    // if (possibleSteps === undefined) {
-    //     console.log(board[rIndex][cIndex], piece);
-    //     console.log(steps["pawn"]);
-    //     console.log(steps["pawn"]["white"])
-    //     console.log(steps["pawn"]["white"].attackMoves)
-    //     console.log(steps["pawn"]["white"]["attackMoves"])
-    // }
-    // console.log(possibleSteps);
+
     for (let i = 0; i < possibleSteps.length; i++) {
         const stepsData = possibleSteps[i];
         let directions = stepsData[stepsData["name"]];
         if (piece.type === "pawn") {
             directions = possibleSteps;
-            // console.log(directions);
         }
-        // console.log(directions);
         for (const [dr, dc] of directions) {
             const newRow = rIndex + dr;
             const newCol = cIndex + dc;
@@ -79,9 +70,6 @@ export const addAttackFlagsForCheck = (board, rIndex, cIndex, checkingColor) => 
             if (cell.isEmpty) {
                 cell.isUnderAttack = true;
             } else if (cell.piece.color === checkingColor) {
-                // if (cell.piece.type === "king") {
-                //     console.log(cell.piece.color, checkingColor);
-                // }
                 cell.isUnderAttack = true;
                 break;
             } else {
