@@ -7,6 +7,7 @@ export const swapCells = (board, rIndex, cIndex, activePiece) => {
 }
 
 export const putPieceAtPosition = (board, rIndex, cIndex, piece) => {
+    // console.log(rIndex, cIndex, piece);
     if (board[rIndex][cIndex].isEmpty) {
         board[rIndex][cIndex].isEmpty = false;
     }

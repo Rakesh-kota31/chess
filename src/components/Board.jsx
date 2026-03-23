@@ -64,7 +64,8 @@ const Board = (props) => {
             updateRemovedPieces,
             completeMatch,
             updateSteps,
-            updatePrevBoards
+            updatePrevBoards,
+            prevSteps: steps
         })
     }
 

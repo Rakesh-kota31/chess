@@ -2,7 +2,7 @@ const algebraicNotation = {
     king: "K",
     queen: "Q",
     bishop: "B",
-    horse: "N",
+    knight: "N",
     rook: "R",
     pawn: ""
 }

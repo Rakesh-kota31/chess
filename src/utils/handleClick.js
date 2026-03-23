@@ -10,6 +10,7 @@ import {
     isInsideBoard
 } from "./methods.js";
 import {addAttackFlagsForCheck, isKingUnderCheck} from "./kingUnderCheck.js";
+import {getFile} from "./data.js";
 
 export const handle = ({
     board,
@@ -20,10 +21,9 @@ export const handle = ({
     activePiece,
     updateActivePiece,
     updateBoard,
-    updateRemovedPieces, completeMatch, updateSteps, updatePrevBoards
+    updateRemovedPieces, completeMatch, updateSteps, updatePrevBoards, prevSteps,
 }) => {
     const cell = board[rIndex][cIndex];
-    // console.log("Handle function started");
     if (cell.isHighlighted) {
         // this piece is highlighted, move active piece to here
         const newBoard = createNewBoard(board); // first remove any highlight or attack flags from the board
@@ -93,11 +93,29 @@ export const handle = ({
         checkGameStatus(newBoard, sideToMove, updateActivePiece, updateBoard, updateSideToMove, completeMatch, stepNotation, updateSteps, updatePrevBoards);
     }
     else if (cell.isUnderAttack) {
-        // console.log("Cell: Under Attack")
         const {r, c} = activePiece; // active or selected piece's row and col number
         const killedPiece = board[rIndex][cIndex].piece;
         const newBoard = createNewBoard(board);
         const activePieceDetails = newBoard[r][c].piece;
+        // en passant capture
+        if (activePieceDetails.type === "pawn") {
+            if (killedPiece.type === "pawn") {
+                if (rIndex === r) {
+                    removeFlags(newBoard);
+                    removePieceFromPosition(newBoard, rIndex, cIndex);
+                    let newRow = sideToMove === "white" ? rIndex-1 : rIndex+1;
+                    // let newCol = cIndex;
+                    putPieceAtPosition(newBoard, newRow, cIndex, activePieceDetails);
+                    removePieceFromPosition(newBoard, r, c);
+                    updateRemovedPieces(killedPiece);
+                    newBoard[newRow][cIndex].piece.atInitialPosition = false;
+                    let stepNotation = getFile(c) + "x" + getFile(cIndex) + (sideToMove === "white" ? "6" : "3");
+                    checkGameStatus(newBoard, sideToMove, updateActivePiece, updateBoard, updateSideToMove, completeMatch, stepNotation, updateSteps, updatePrevBoards);
+                    return;
+                }
+            }
+        }
+
         let stepNotation = activePieceDetails.algebraicNotation + "x" + cell.file + cell.rank;
         if (newBoard[r][c].piece.type === "pawn") {
             stepNotation = newBoard[r][c].file + stepNotation;
@@ -110,7 +128,6 @@ export const handle = ({
         checkGameStatus(newBoard, sideToMove, updateActivePiece, updateBoard, updateSideToMove, completeMatch, stepNotation, updateSteps, updatePrevBoards);
     }
     else if (activePiece !== null && rIndex === activePiece.r && cIndex === activePiece.c) {
-        // console.log("Cell: active piece");
         const newBoard = createNewBoard(board);
         removeFlags(newBoard);
         updateBoard(newBoard);
@@ -120,11 +137,8 @@ export const handle = ({
         return null;
     }
     else if (cell.piece.color === sideToMove) {
-        // console.log("Cell: Piece")
         const piece = board[rIndex][cIndex].piece;
         const possibleSteps = steps[piece.type];
-        // console.log(piece);
-        // console.log(possibleSteps)
         const newBoard = createNewBoard(board);
         if (activePiece !== null) {
             removeFlags(newBoard);
@@ -132,9 +146,8 @@ export const handle = ({
         }
         if (piece.type === "pawn") {
             pawnMoveHighlight(newBoard, rIndex, cIndex, piece, 1, sideToMove);
-            // 2 places forward or not
+
             if (piece.atInitialPosition) {
-                // console.log(piece.atInitialPosition);
                 pawnMoveHighlight(newBoard, rIndex, cIndex, piece, 2, sideToMove);
             }
             // for attack positions
@@ -146,9 +159,22 @@ export const handle = ({
                 pawnMoveAttack(newBoard, rIndex, cIndex, +1, +1, sideToMove);
                 pawnMoveAttack(newBoard, rIndex, cIndex, +1, -1, sideToMove);
             }
-            // Attack positions
             // Pawn promotion
             // En passant
+            if (piece.type === "pawn") {
+                if (sideToMove === "white") {
+                    if (rIndex === 3) {
+                        // whether opposite pawn at left
+                        EnPassantCheck(newBoard, rIndex, cIndex, prevSteps, sideToMove, -1, "5");
+                        EnPassantCheck(newBoard, rIndex, cIndex, prevSteps, sideToMove, +1, "5");
+                    }
+                } else {
+                    if (rIndex === 4) {
+                        EnPassantCheck(newBoard, rIndex, cIndex, prevSteps, sideToMove, -1, "4");
+                        EnPassantCheck(newBoard, rIndex, cIndex, prevSteps, sideToMove, +1, "4");
+                    }
+                }
+            }
         }
         else {
             // normal moves
@@ -212,6 +238,23 @@ export const handle = ({
         return null;
     }
 }
+
+const EnPassantCheck = (board, rIndex, cIndex, prevSteps, sideToMove, value, rank) => {
+    if (cIndex + value >= 0 && cIndex + value < 8 && !board[rIndex][cIndex + value].isEmpty && board[rIndex][cIndex+ value].piece.type === "pawn" && board[rIndex][cIndex+ value].piece.color !== sideToMove) {
+        if (prevSteps.length !== 0 && prevSteps[prevSteps.length - 1] === getFile(cIndex + value) + rank ) {
+            // pass
+            const tempBoard = createNewBoard(board);
+            removeFlags(tempBoard);
+            removePieceFromPosition(tempBoard, rIndex, cIndex+value);
+            putPieceAtPosition(tempBoard, rIndex + sideToMove === "white" ? -1 : 1, cIndex+value, tempBoard[rIndex][cIndex].piece);
+            removePieceFromPosition(tempBoard, rIndex, cIndex);
+            if (!isKingUnderCheck(tempBoard, sideToMove)) {
+                board[rIndex][cIndex+value].isUnderAttack = true;
+            }
+        }
+    }
+}
+
 
 const isKingSideCastlePossible = (board, sideToMove) => {
     if (sideToMove === "white") {
@@ -298,7 +341,6 @@ const createBoardAndAddFlags = (board, sideToMove) => {
 }
 
 const pawnMoveHighlight = (board, rIndex, cIndex, piece, value, sideToMove) => {
-    // console.log("Pawn Move Highlight function")
     let addValue = value;
     if (piece.color === "white") {
         addValue = -value;
@@ -306,18 +348,15 @@ const pawnMoveHighlight = (board, rIndex, cIndex, piece, value, sideToMove) => {
     const newRow = rIndex + addValue;
     const newCol = cIndex;
 
-    // console.log(newRow, newCol);
     if (isInsideBoard(newRow, newCol)) {
         if (board[newRow][newCol].isEmpty ) {
             if (!willKingBeUnderCheck(board, rIndex, cIndex, newRow, newCol, sideToMove))
-                // console.log("Highlighting")
                 board[newRow][newCol].isHighlighted = true;
         }
     }
 }
 
 const pawnMoveAttack = (board, rIndex, cIndex, rValue, cValue, sideToMove) => {
-    // console.log("Pawn Move Attack")
     const newRow = rIndex + rValue
     const newCol = cIndex + cValue;
 
@@ -330,8 +369,6 @@ const pawnMoveAttack = (board, rIndex, cIndex, rValue, cValue, sideToMove) => {
 }
 
 const willKingBeUnderCheck = (board, rIndex, cIndex, r, c, sideToMove) => {
-    // console.log("Will King Be Under Check")
-    // console.log(`Checking whether ${sideToMove} King will be under check`);
     const newBoard = createNewBoard(board);
     removeFlags(newBoard);
     putPieceAtPosition(newBoard, r, c, newBoard[rIndex][cIndex].piece)
